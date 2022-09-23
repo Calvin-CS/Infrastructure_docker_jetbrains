@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jetbrainsls-azure-managed-disk
+  namespace: production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 4Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jetbrainsls
+  namespace: production
+  annotations: 
+    "builddate": "20220923-01"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jetbrainsls
+  template:
+    metadata:
+      labels:
+        app: jetbrainsls
+    spec:
+      # Allow non-root user to access PersistentVolume
+      securityContext:
+        fsGroup: 1000
+      containers:
+      - name: jetbrainsls
+        image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ default "latest" .Values.image.tag }}
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - mountPath: "/data"
+          name: volume
+        env:
+          - name: JLS_VIRTUAL_HOSTS
+            value: jetbrainsls.{{ .Values.dns.name }}
+          - name: TZ
+            value: America/Detroit
+      volumes:
+      - name: volume
+        persistentVolumeClaim:
+          claimName: jetbrainsls-azure-managed-disk
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jetbrainsls
+  namespace: production
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+  selector:
+    app: jetbrainsls

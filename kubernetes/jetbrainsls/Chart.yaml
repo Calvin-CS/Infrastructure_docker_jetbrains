@@ -1,0 +1,4 @@
+apiVersion: v2
+name: jetbrainsls
+description: A Helm chart for Kubernetes deployment of jetbrainsls
+version: 0.1.0
