@@ -16,8 +16,6 @@ kind: Deployment
 metadata:
   name: jetbrainsls
   namespace: production
-  annotations: 
-    "builddate": "20220923-01"
 spec:
   replicas: 1
   selector:
@@ -25,6 +23,8 @@ spec:
       app: jetbrainsls
   template:
     metadata:
+      annotations:
+        releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
       labels:
         app: jetbrainsls
     spec:
